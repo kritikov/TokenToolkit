@@ -92,6 +92,7 @@ This library provides the native engine driving:
 
     📝 [Deep Dive Article: The Anatomy of JSON Web Tokens]([https://nkode.gr/EN/tools/jwt-decoder](https://nkode.gr/EN/articles/286/the-anatomy-of-json-web-tokens-jwt-what-they-are-and-how-they-work))
 
+
 <img width="590" height="681" alt="image" src="https://github.com/user-attachments/assets/640a646f-8aad-4e25-83b3-122da3727710" />
 
 ---
@@ -102,3 +103,8 @@ This library provides the native engine driving:
 
 <img width="894" height="841" alt="image" src="https://github.com/user-attachments/assets/c84ee37c-1820-43cc-83fb-f8d19e69e4f1" />
 
+---
+    
+## 📄 License
+
+TokenToolkit.js is free software licensed under the GNU GPL v3.0 or later.
