@@ -1,4 +1,4 @@
-# TokenToolkit 🛠️
+# TokenToolkit.js 🛠️
 
 A lightweight, local-first JavaScript utility library designed for deep JWT parsing, metadata extraction, and static security inspection.
 
