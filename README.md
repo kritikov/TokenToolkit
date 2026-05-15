@@ -91,3 +91,14 @@ This library provides the native engine driving:
     🛠️ [nKode Online JWT Decoder & Inspector](https://nkode.gr/EN/tools/jwt-decoder)
 
     📝 [Deep Dive Article: The Anatomy of JSON Web Tokens]([https://nkode.gr/EN/tools/jwt-decoder](https://nkode.gr/EN/articles/286/the-anatomy-of-json-web-tokens-jwt-what-they-are-and-how-they-work))
+
+<img width="590" height="681" alt="image" src="https://github.com/user-attachments/assets/640a646f-8aad-4e25-83b3-122da3727710" />
+
+---
+
+<img width="580" height="698" alt="image" src="https://github.com/user-attachments/assets/1997281b-b449-4742-8009-6fc6319894f2" />
+
+---
+
+<img width="894" height="841" alt="image" src="https://github.com/user-attachments/assets/c84ee37c-1820-43cc-83fb-f8d19e69e4f1" />
+
