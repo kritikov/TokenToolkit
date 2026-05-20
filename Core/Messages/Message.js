@@ -3,24 +3,27 @@ import MessageCatalog from "./MessageCatalog.js";
 
 export default class Message{
 
-    constructor({ text = null, code = null, severity = null, data = null }) {
+    constructor({ text = null, code = null, severity = null, data = null, titleData = null, catalog = MessageCatalog }) {
 
-        const catalog = code ? MessageCatalog.map[code] : null;
+        const entry = code ? catalog?.map?.[code] : null;
 
         this.code = code || null;
-        this.title = catalog?.title || text || "Unknown Issue";
+        
+        this.title = entry?.title || text || "Unknown Issue";
+        if(titleData)
+            this.title += " " + titleData;
 
         // we use data for additional informations
-        this.details = catalog?.details || "";
+        this.details = entry?.details || "";
         if (data) {
-            this.details = this.details ? `${this.details} (${data})` : data;
+            this.details = `${this.details} (${data})`;
         }
 
-        this.category = catalog?.category || "custom";
+        this.category = entry?.category || "custom";
 
         this.severity =
             severity ||
-            catalog?.severity ||
+            entry?.severity ||
             Severity.INFO;
     }
 }

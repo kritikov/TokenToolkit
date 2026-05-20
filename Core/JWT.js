@@ -6,8 +6,17 @@ import SignatureValidator from "./Validators/SignatureValidator.js";
 import Message from "./Messages/Message.js";
 import Severity from "./Messages/Severity.js";
 
+/**
+ * Main JSON Web Token (JWT) analyzer and decoder class.
+ * Manages the full lifecycle of token structural compilation, segment parsing, metadata enrichment, and validation processing.
+ */
 export default class JWT {
     
+    /**
+     * Initializes a new instance of the JWT parser.
+     * Sanitizes input data streams and immediately orchestrates downstream block diagnostics if structural baselines clear.
+     * @param {string} raw - The raw dot-separated JSON Web Token sequence.
+     */
     constructor(raw) {
 		const trimmedRaw = typeof raw === "string" ? raw.trim() : raw;
         this.raw = trimmedRaw;
@@ -28,6 +37,10 @@ export default class JWT {
 
     // ===== PUBLIC =====
     
+    /**
+     * Projects the internal operational values into a structured data object mapping.
+     * @returns {Object} A sanitized data model mapping key segments or null components.
+     */
     toJSON() {
         return {
             header: this.header?.value || null,
@@ -36,6 +49,11 @@ export default class JWT {
         };
     }
 
+    /**
+     * Converts the standard segments state map directly into an exported JSON string asset.
+     * @param {boolean} [pretty=true] - Toggles structured multiline output alignment spacing.
+     * @returns {string} Fully serialized token string schema representation.
+     */
     toJSONString(pretty = true) {
 
         return JSON.stringify(
@@ -45,7 +63,12 @@ export default class JWT {
         );
     }
 
-    headerToJSON() {
+    /**
+     * Serializes the unpacked active header segment metadata properties into an isolated JSON string context.
+     * @param {boolean} [pretty=true] - Toggles multiline output structural nesting indent configurations.
+     * @returns {string} Serialized active header attribute map block.
+     */
+    headerToJSON(pretty = true) {
         return JSON.stringify(
             this.header?.value || null,
             null,
@@ -53,7 +76,12 @@ export default class JWT {
         );
     }
 
-    payloadToJSON() {
+    /**
+     * Serializes the unpacked active payload statement metadata properties into an isolated JSON string context.
+     * @param {boolean} [pretty=true] - Toggles multiline output structural nesting indent configurations.
+     * @returns {string} Serialized active claims attribute map block.
+     */
+    payloadToJSON(pretty = true) {
         return JSON.stringify(
             this.payload?.value || null,
             null,
@@ -67,7 +95,9 @@ export default class JWT {
 	// ---------------------------
 
     /**
-     * DECODER (STRUCTURE ONLY)
+     * Performs top-level layout fragmentation.
+     * Isolates standard token compound sectors along index dot boundaries before piping streams to individual block decoders.
+     * @private
      */
 	static #decode(input) {
 
@@ -87,51 +117,57 @@ export default class JWT {
 	}
     
     /**
-     * decode the header or the payload
+     * Decodes and unpacks an isolated Base64URL string sector block into clean object structures.
+     * Safe-catches string encoding failures or JSON malformations silently.
+     * @private
      */
-	static #decodePart(value, sectionName = "payload") {
+    static #decodePart(value, sectionName = "payload") {
+        try {
+            // 1. Αποκωδικοποίηση σε UTF-8 string (αν αποτύχει το b64 ή το UTF-8, πάει στο catch)
+            const decodedText = Base64.decodeToUtf8(value);
 
-		if (!Base64.isBase64Url(value)) {
-			return {
-                valid:false,
-                error:"Invalid base64url encoding"
-            }
-		}
-
-		try {
-			return {
-				valid: true,
-				text: JSON.parse(Base64.decodeUrl(value))
-			};
-		}
-		catch {
-			return {
-                valid:false,
-                error: `Invalid JSON ${sectionName}`
-            }
-		}
-	}
-
-    /**
-     * decode the signature
-     */
-    static #decodeSignature(value) {
-
-        if (!Base64.isBase64Url(value)) {
+            // 2. Μετατροπή σε αντικείμενο JSON (αν αποτύχει, πάει στο catch)
             return {
-                valid: false,
-                error: "Invalid base64url encoding"
+                valid: true,
+                text: JSON.parse(decodedText)
             };
         }
+        catch {
+            // Πιάνει και τα σφάλματα της Base64 και του JSON.parse
+            return {
+                valid: false,
+                error: `Invalid ${sectionName} structure or encoding`
+            };
+        }
+    }
 
-        return {
-            valid: true,
-            text: value
-        };
+    /**
+     * Audits the raw trailing signature sequence structure block against baseline Base64 requirements.
+     * Retains the raw encoding layout string on success without executing plain text parsing transforms.
+     * @private
+     */
+    static #decodeSignature(value) {
+        try {
+            // Ελέγχουμε μόνο αν είναι έγκυρο Base64 δομικά (δεν μας νοιάζει το UTF-8 ή το JSON)
+            Base64.decodeRaw(value);
+
+            return {
+                valid: true,
+                text: value // Επιστρέφουμε το raw string της υπογραφής
+            };
+        }
+        catch {
+            return {
+                valid: false,
+                error: "Invalid Base64URL signature encoding"
+            };
+        }
     }
 
 	/**
-     * Analyze the decoded header and create the header object
+     * Evaluates header element definitions against dictionary registries.
+     * Maps cryptographic parameter scopes, separates custom components, and aggregates external structural validation reports.
+     * @private
      */
 	static #analyzeHeader(decodedHeader) {
 
@@ -213,7 +249,9 @@ export default class JWT {
     }
 
     /**
-     * Analyze the decoded payload and create the payload object
+     * Dissects, filters, and standardizes decoded claims parameters.
+     * Normalizes chronological numerical values into human-readable timestamp descriptions and runs target payload assertions.
+     * @private
      */
     static #analyzePayload(decodedPayload, header) {
 
@@ -284,7 +322,9 @@ export default class JWT {
     }
     
     /**
-     * Analyze the decoded signature and create the signature object
+     * Measures signature metrics and structures preview slices.
+     * Delegates downstream cryptographic profile logic validations against current header metadata definitions.
+     * @private
      */
 	static #analyzeSignature(decodedSignature, header) {
 
@@ -319,7 +359,12 @@ export default class JWT {
         return result;
     }
 
-    // validate the input format
+    /**
+     * Conducts quick preliminary string structural inspections.
+     * Assures inputs are populated, string-based, and accurately split into exactly three logical segments.
+     * @param {*} input - The unchecked data variable input map.
+     * @returns {Object} Simple status mapping showing validation outcome flags and error reasons.
+     */
     static isValidInput(input) {
 
 		if (input == null) {

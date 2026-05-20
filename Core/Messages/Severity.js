@@ -4,4 +4,5 @@ export default class Severity {
     static LOW = "low";             // suspicious / unusual
     static WARNING = "warning";     // risky / misconfigured
     static CRITICAL = "critical";   // invalid / unsafe
+    static SUCCESS = "success";     // success
 }

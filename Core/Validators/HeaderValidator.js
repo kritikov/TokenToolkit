@@ -6,10 +6,8 @@ import MessageCodes from "../Messages/MessageCodes.js";
 export default class HeaderValidator{
 
     static validate(headerText) {
-        // 1. Πρώτα ελέγχουμε τη δομή
-        const structureMessages = HeaderValidator.#validateStructure(headerText);
         
-        // Αν το αντικείμενο είναι άκυρο (π.χ. null ή string), σταματάμε αμέσως
+        const structureMessages = HeaderValidator.#validateStructure(headerText);
         if (structureMessages.some(m => m.code === MessageCodes.HEADER_INVALID_OBJECT)) {
             return structureMessages;
         }
