@@ -66,6 +66,7 @@ import TokenToolkit from "./TokenToolkit.js";
 // Multi-dialect decoding (Handles whitespace, safe padding, and standard/url alphabets)
 const telemetry = TokenToolkit.decodeBase64("ZXlKaGJHY2lPaUpJVXpJMk5pSXNJbVY0Y0NJNk5pSmRmUT09");
 console.log(telemetry.decodedText); // Plain output text
+console.log(telemetry.bytes);       // The raw bytes
 console.log(telemetry.messages);    // Full diagnostic logs array
 
 // Custom safe Encoding
