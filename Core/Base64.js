@@ -213,6 +213,7 @@ export default class Base64 {
         const result = {
             valid: true,
             decodedText: "",
+            bytes: null,
             type: null,
             isUtf8: null,
             characterCount: 0,
@@ -252,10 +253,11 @@ export default class Base64 {
         // UTF-8 CHECK
         // =====================================================
 
+        result.bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+
         result.isUtf8 = Base64.isUtf8FromBinary(binary);
         if (result.isUtf8) {
-            const bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
-            const utf8Text = new TextDecoder().decode(bytes);
+            const utf8Text = new TextDecoder().decode(result.bytes);
             result.decodedText = utf8Text;
             result.characterCount = utf8Text.length;
             Base64.#addMessage(result.messages, Codes.DEC_UTF8_VALID);
