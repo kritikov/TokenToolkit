@@ -203,6 +203,80 @@ export default class Base64 {
     }
 
     /**
+     * Inspects the first bytes of a stream to map signatures (Magic Numbers) into precise metadata profiles.
+     * @private
+     * @param {Uint8Array} bytes - Raw stream buffer subset.
+     * @returns {Object} Structured file telemetry payload.
+     */
+    static #detectFileSignature(bytes, isUtf8 = false) {
+        if (!bytes || bytes.length === 0) {
+            return { ext: "bin", mime: "application/octet-stream", isImage: false };
+        }
+
+        // 1. TEXT DETECTION STRATEGY (Για TXT και JSON)
+        if (isUtf8) {
+            // Παίρνουμε τους πρώτους χαρακτήρες για να δούμε αν είναι JSON
+            // 123 -> '{', 91 -> '['
+            const firstByte = bytes[0];
+            
+            // Παράκαμψη πιθανών leading spaces/newlines για το JSON check
+            let firstNonWhitespace = 0;
+            for (let i = 0; i < Math.min(bytes.length, 20); i++) {
+                if (bytes[i] !== 32 && bytes[i] !== 10 && bytes[i] !== 13 && bytes[i] !== 9) {
+                    firstNonWhitespace = bytes[i];
+                    break;
+                }
+            }
+
+            if (firstNonWhitespace === 123 || firstNonWhitespace === 91) { // '{' ή '['
+                return { ext: "json", mime: "application/json", isImage: false };
+            }
+            return { ext: "txt", mime: "text/plain", isImage: false };
+        }
+
+        if (bytes.length < 4) {
+            return { ext: "bin", mime: "application/octet-stream", isImage: false };
+        }
+
+        const maxBytes = Math.min(bytes.length, 12);
+        const hexArr = Array.from(bytes.subarray(0, maxBytes)).map(b => b.toString(16).padStart(2, '0').toUpperCase());
+        const hex4 = hexArr.slice(0, 4).join('');
+        const hex12 = hexArr.join('');
+
+        // =====================================================
+        // SIGNATURES EVALUATION (Εμπλουτισμένη Λίστα)
+        // =====================================================
+        
+        // Images
+        if (hex4 === "89504E47") return { ext: "png", mime: "image/png", isImage: true };
+        if (hex4.startsWith("FFD8FF")) return { ext: "jpg", mime: "image/jpeg", isImage: true };
+        if (hex4 === "47494638") return { ext: "gif", mime: "image/gif", isImage: true };
+        if (hex4 === "52494646" && hex12.substring(16, 24) === "57454250") return { ext: "webp", mime: "image/webp", isImage: true };
+        if (hex4 === "00000100") return { ext: "ico", mime: "image/x-icon", isImage: true };
+        if (hex4 === "424D")     return { ext: "bmp", mime: "image/bmp", isImage: true }; // Προσθήκη BMP
+
+        // Documents & Media
+        if (hex4 === "25504446") return { ext: "pdf", mime: "application/pdf", isImage: false };
+        
+        // Audio / Video
+        if (hex4.startsWith("494433") || hex4.startsWith("FFF3") || hex4.startsWith("FFF2")) {
+            return { ext: "mp3", mime: "audio/mpeg", isImage: false }; // Προσθήκη MP3
+        }
+        if (hex12.substring(8, 24) === "6674797069736F6D" || hex12.substring(8, 24) === "667479706D703432") {
+            return { ext: "mp4", mime: "video/mp4", isImage: false }; // Προσθήκη MP4 (ftypisom / ftypmp42)
+        }
+
+        // Archives & Binaries
+        if (hex4 === "504B0304") return { ext: "zip", mime: "application/zip", isImage: false };
+        if (hex4 === "377ABCAF") return { ext: "7z", mime: "application/x-7z-compressed", isImage: false }; // Προσθήκη 7z
+        if (hex4.startsWith("52617221")) return { ext: "rar", mime: "application/vnd.rar", isImage: false }; // Προσθήκη RAR
+        if (hex4.startsWith("1F8B08"))   return { ext: "tar.gz", mime: "application/gzip", isImage: false };
+        if (hex4.startsWith("4D5A"))     return { ext: "exe", mime: "application/x-msdownload", isImage: false };
+
+        return { ext: "bin", mime: "application/octet-stream", isImage: false };
+    }
+
+    /**
      * Main decoding engine optimized for premium web interfaces.
      * Executes end-to-end extraction, character telemetry, structural testing, and builds message profiles.
      * * @param {string} value - Raw user interface string payload.
@@ -219,6 +293,7 @@ export default class Base64 {
             characterCount: 0,
             byteCount: 0,
             paddingFixed: false,
+            fileInfo: { ext: "bin", mime: "application/octet-stream", isImage: false },
             messages: []
         };
 
@@ -250,10 +325,14 @@ export default class Base64 {
         Base64.#addMessage(result.messages, Codes.DEC_BASE64_DECODE_SUCCESS);
 
         // =====================================================
-        // UTF-8 CHECK
+        // BYTE CONVERSION & METADATA DETECTION
         // =====================================================
 
         result.bytes = Uint8Array.from(binary, c => c.charCodeAt(0));
+
+        // =====================================================
+        // UTF-8 CHECK
+        // =====================================================
 
         result.isUtf8 = Base64.isUtf8FromBinary(binary);
         if (result.isUtf8) {
@@ -272,6 +351,8 @@ export default class Base64 {
             result.decodedText = binary;
             Base64.#addMessage(result.messages, Codes.DEC_UTF8_INVALID);
         }
+
+        result.fileInfo = Base64.#detectFileSignature(result.bytes, result.isUtf8);
 
         const charData = `: ${result.characterCount}`;
         const byteData = `: ${result.byteCount}`;
