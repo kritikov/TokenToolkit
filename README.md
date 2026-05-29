@@ -100,6 +100,12 @@ Options: { base64Url: boolean, removePadding: boolean }
 Returns: Detailed serialization schema reporting layout shifts, byte tallies, and target texts.
 
 ```javascript
+TokenToolkit.encodeToBase64FromFile(file)
+```
+Static wrapper for custom Base64 string generation from a file.
+Returns: A clean, structured telemetry and payload block in base65 encoding.
+
+```javascript
 jwtInstance.toJSON()
 ```
 
