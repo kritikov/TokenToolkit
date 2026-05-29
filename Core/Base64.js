@@ -523,5 +523,82 @@ export default class Base64 {
 
         return result;
     }
+
+    /**
+     * Reads a local binary File object, encodes it to Base64, isolates its signature,
+     * and returns a clean telemetry object optimized for encoding workflows.
+     * @param {File} fileTarget - The native browser File object from input/dropzone.
+     * @returns {Promise<Object>} Clean object containing raw text, telemetry, and zero irrelevant messages.
+     */
+    static encodeFromFile(fileTarget) {
+        return new Promise((resolve, reject) => {
+            if (!fileTarget) {
+                return reject(new Error("No file provided"));
+            }
+
+            const reader = new FileReader();
+
+            reader.onload = (event) => {
+                const rawResult = event.target.result;
+                if (!rawResult) {
+                    return reject(new Error("File reading resulted in empty payload"));
+                }
+
+                // 1. Isolate the raw Base64 string from the Data URL prefix
+                const commaIndex = rawResult.indexOf(",");
+                const rawBase64 = commaIndex !== -1 ? rawResult.substring(commaIndex + 1) : rawResult;
+
+                // 2. MAGIC NUMBERS CHECK (Evaluates only the first few bytes for maximum execution speed)
+                let finalMime = fileTarget.type || "application/octet-stream";
+                
+                // Magic Numbers require at least 4-12 bytes.
+                // If Base64 length is under 8 characters (~6 bytes), there is no need to perform the check.
+                if (rawBase64.length >= 8) {
+
+                    try {
+                        // Extract up to 24 characters, ensuring it is always a multiple of 4 to prevent breaking Base64 alignment
+                        const chunkSize = Math.min(rawBase64.length, 24);
+                        const alignedSize = chunkSize - (chunkSize % 4); // Round down to the nearest multiple of 4
+                        
+                        if (alignedSize >= 4) {
+                            const sampleBase64 = rawBase64.substring(0, alignedSize);
+                            const sampleBinary = Base64.decodeRaw(sampleBase64);
+                            const sampleBytes = Uint8Array.from(sampleBinary, c => c.charCodeAt(0));
+                            
+                            const signatureInfo = Base64.#detectFileSignature(sampleBytes, false);
+                            
+                            if (signatureInfo && signatureInfo.mime !== "application/octet-stream") {
+                                finalMime = signatureInfo.mime;
+                            }
+                        }
+                    } catch (e) {
+                        // If signature detection encounters an anomaly, execute a silent fallback to the OS MIME type
+                        console.warn("Signature detection skipped, using OS mime type instead.");
+                    }
+                }
+
+                // 3. Return a clean, decoupled telemetry and payload block back to the UI
+                const output = {
+                    valid: true,
+                    rawBase64: rawBase64,
+                    fullUri: rawResult,
+                    telemetry: {
+                        name: fileTarget.name,
+                        mime: finalMime,
+                        originalSize: fileTarget.size,
+                        stringSize: rawBase64.length
+                    }
+                };
+
+                resolve(output);
+            };
+
+            reader.onerror = () => {
+                reject(new Error("FileReader structural failure."));
+            };
+
+            reader.readAsDataURL(fileTarget);
+        });
+    }
 }
 

@@ -51,4 +51,15 @@ export default class TokenToolkit {
         return Base64.encode(input, options);
     }
 
+    /**
+     * Reads a local binary File object, encodes it to Base64, isolates its signature,
+     * and returns a clean, structured telemetry and payload block.
+     * @param {File} file - The native browser File object from input/dropzone.
+     * @returns {Promise<Object>} Clean object containing raw text, unified telemetry, and zero irrelevant messages.
+     */
+    static async encodeToBase64FromFile(file) {
+        return Base64.encodeFromFile(file);
+    }
+
+
 }
